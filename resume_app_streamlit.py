@@ -12,9 +12,7 @@ if uploaded_file is not None:
     data = json.load(uploaded_file)
     data["作成日"] = datetime.today().strftime("%Y/%m/%d")
 
-    # 📌 テンプレートをアプリ内から読み込む（アップロード不要）
-    doc = DocxTemplate("テンプレート.docx")  # GitHubに同梱されたテンプレートを読み込む
-
+    doc = DocxTemplate("テンプレート.docx")  # 内蔵テンプレートを読み込む
     doc.render(data)
 
     output_filename = f"職務経歴書_{data['氏名']}.docx"
