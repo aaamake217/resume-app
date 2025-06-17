@@ -1,34 +1,30 @@
-
+from docxtpl import DocxTemplate
+from datetime import datetime
 import streamlit as st
 import json
-import datetime
-from docxtpl import DocxTemplate
-import pandas as pd
+from io import BytesIO
 
 st.title("職務経歴書作成アプリ（Streamlit版）")
 
-st.markdown("### ステップ①：JSONファイルのアップロード")
-json_file = st.file_uploader("ChatGPTなどで作成された職務経歴書データ（JSON）をアップロードしてください", type="json")
+uploaded_file = st.file_uploader("ステップ①：JSONファイルのアップロード", type="json")
 
-st.markdown("### ステップ②：Wordテンプレート（.docx）のアップロード")
-template_file = st.file_uploader("Jinjaタグ付きの職務経歴書テンプレート（Word）をアップロードしてください", type="docx")
+if uploaded_file is not None:
+    data = json.load(uploaded_file)
+    data["作成日"] = datetime.today().strftime("%Y/%m/%d")
 
-if json_file and template_file:
-    # JSON読み込み
-    data = json.load(json_file)
+    # 📌 テンプレートをアプリ内から読み込む（アップロード不要）
+    doc = DocxTemplate("テンプレート.docx")  # GitHubに同梱されたテンプレートを読み込む
 
-    # 作成日を追加（自動で今日）
-    data["作成日"] = datetime.date.today().strftime("%Y/%m/%d")
-
-    # Wordテンプレートに差し込み
-    doc = DocxTemplate(template_file)
     doc.render(data)
 
-    output_filename = f"職務経歴書_{data.get('氏名', 'noname')}.docx"
-    doc.save(output_filename)
+    output_filename = f"職務経歴書_{data['氏名']}.docx"
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
 
-    with open(output_filename, "rb") as file:
-        st.success("職務経歴書が完成しました！以下からダウンロードできます：")
-        st.download_button("📄 ダウンロードする", file, file_name=output_filename)
-else:
-    st.info("上記2つのファイルをアップロードしてください。")
+    st.download_button(
+        label="📄 職務経歴書をダウンロード",
+        data=buffer,
+        file_name=output_filename,
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
